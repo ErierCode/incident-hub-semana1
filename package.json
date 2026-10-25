@@ -1,0 +1,19 @@
+{
+  "name": "incident-hub",
+  "version": "0.0.0",
+  "private": true,
+  "description": "IT Incident Hub - gestión de incidentes de TI",
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "migrate": "npm run migrate -w backend",
+    "dev:api": "npm run dev -w backend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
