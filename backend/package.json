@@ -1,6 +1,6 @@
 {
   "name": "@incident-hub/backend",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "API REST de IT Incident Hub",
   "main": "src/server.js",
@@ -26,7 +26,15 @@
   "jest": {
     "testEnvironment": "node",
     "coverageDirectory": "coverage",
-    "coverageReporters": ["text-summary", "cobertura", "lcov"],
-    "collectCoverageFrom": ["src/**/*.js", "!src/server.js", "!src/db/migrate.js"]
+    "coverageReporters": [
+      "text-summary",
+      "cobertura",
+      "lcov"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js",
+      "!src/db/migrate.js"
+    ]
   }
 }
