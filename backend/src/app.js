@@ -1,13 +1,16 @@
 const express = require('express');
 const { version } = require('../package.json');
 const { createIncidentService } = require('./services/incidentService');
+const { createTechnicianService } = require('./services/technicianService');
 const { createIncidentsRouter } = require('./routes/incidents');
+const { createTechniciansRouter } = require('./routes/technicians');
 
 function createApp({ db }) {
   const app = express();
   app.use(express.json());
 
-  const incidents = createIncidentService(db);
+  const technicians = createTechnicianService(db);
+  const incidents = createIncidentService(db, { technicians });
 
   app.get('/health', async (_req, res) => {
     await db.query('SELECT 1');
@@ -15,6 +18,7 @@ function createApp({ db }) {
   });
 
   app.use('/api/incidents', createIncidentsRouter({ incidents }));
+  app.use('/api/technicians', createTechniciansRouter({ technicians }));
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Recurso no encontrado' });

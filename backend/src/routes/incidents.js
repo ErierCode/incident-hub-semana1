@@ -1,5 +1,5 @@
 const express = require('express');
-const { CATEGORIES, PRIORITIES } = require('../domain/catalogs');
+const { CATEGORIES, PRIORITIES, STATUSES } = require('../domain/catalogs');
 
 function parseId(req, res) {
   const id = Number(req.params.id);
@@ -53,6 +53,38 @@ function createIncidentsRouter({ incidents }) {
     });
     console.log(`Incidente ${incident.id} creado por ${incident.reported_by}`);
     res.status(201).json(incident);
+  });
+
+  router.patch('/:id/assign', async (req, res) => {
+    const id = parseId(req, res);
+    if (id === null) return;
+    const { technicianId, changedBy } = req.body || {};
+    if (!Number.isInteger(technicianId) || technicianId <= 0) {
+      return res.status(400).json({ error: 'technicianId debe ser un entero positivo' });
+    }
+    if (changedBy !== undefined && (typeof changedBy !== 'string' || changedBy.trim() === '')) {
+      return res.status(400).json({ error: 'changedBy debe ser un texto no vacío' });
+    }
+
+    const incident = await incidents.assign(id, technicianId, (changedBy || 'coordinador').trim());
+    console.log(`Incidente ${id} asignado al técnico ${technicianId}`);
+    res.json(incident);
+  });
+
+  router.patch('/:id/status', async (req, res) => {
+    const id = parseId(req, res);
+    if (id === null) return;
+    const { status, changedBy } = req.body || {};
+    if (!STATUSES.includes(status)) {
+      return res.status(400).json({ error: `status debe ser uno de: ${STATUSES.join(', ')}` });
+    }
+    if (changedBy !== undefined && (typeof changedBy !== 'string' || changedBy.trim() === '')) {
+      return res.status(400).json({ error: 'changedBy debe ser un texto no vacío' });
+    }
+
+    const incident = await incidents.changeStatus(id, status, (changedBy || 'técnico').trim());
+    console.log(`Incidente ${id} pasó a ${status}`);
+    res.json(incident);
   });
 
   return router;
