@@ -1,10 +1,20 @@
 const { HttpError } = require('../httpError');
+const { ASSIGNABLE, canTransition } = require('../domain/status');
 
 const INCIDENT_COLUMNS = `
   i.id, i.title, i.description, i.category, i.priority, i.reported_by, i.status,
   i.technician_id, t.name AS technician_name, i.created_at, i.updated_at`;
 
-function createIncidentService(db) {
+function createIncidentService(db, { technicians }) {
+  // Entrada automática en la bitácora del incidente.
+  async function logEvent(incidentId, author, message) {
+    await db.query(
+      `INSERT INTO incident_comments (incident_id, author, message, type)
+       VALUES ($1, $2, $3, 'SISTEMA')`,
+      [incidentId, author, message],
+    );
+  }
+
   async function getById(id) {
     const { rows } = await db.query(
       `SELECT ${INCIDENT_COLUMNS}
@@ -37,7 +47,41 @@ function createIncidentService(db) {
     return rows;
   }
 
-  return { create, getById, list };
+  async function assign(id, technicianId, changedBy) {
+    const incident = await getById(id);
+    if (!ASSIGNABLE.includes(incident.status)) {
+      throw new HttpError(409, `No se puede asignar un incidente en estado ${incident.status}`);
+    }
+    const technician = await technicians.findById(technicianId);
+    if (!technician) {
+      throw new HttpError(400, `El técnico ${technicianId} no existe`);
+    }
+
+    const newStatus = incident.status === 'NUEVO' ? 'ASIGNADO' : incident.status;
+    await db.query(
+      `UPDATE incidents SET technician_id = $1, status = $2, updated_at = NOW() WHERE id = $3`,
+      [technicianId, newStatus, id],
+    );
+    const action = incident.technician_id ? 'Reasignado' : 'Asignado';
+    await logEvent(id, changedBy, `${action} a ${technician.name}`);
+    return getById(id);
+  }
+
+  async function changeStatus(id, status, changedBy) {
+    const incident = await getById(id);
+    if (!canTransition(incident.status, status)) {
+      throw new HttpError(409, `Transición no permitida: ${incident.status} → ${status}`);
+    }
+    if (status === 'ASIGNADO' && !incident.technician_id) {
+      throw new HttpError(409, 'Para pasar a ASIGNADO use PATCH /assign con un técnico');
+    }
+
+    await db.query(`UPDATE incidents SET status = $1, updated_at = NOW() WHERE id = $2`, [status, id]);
+    await logEvent(id, changedBy, `Estado cambiado de ${incident.status} a ${status}`);
+    return getById(id);
+  }
+
+  return { create, getById, list, assign, changeStatus };
 }
 
 module.exports = { createIncidentService };
