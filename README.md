@@ -27,6 +27,20 @@ npm run dev:api             # API en http://localhost:3000
 
 Verificar: `curl http://localhost:3000/health`
 
+## API REST
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/health` | Estado del servicio y la base de datos |
+| GET | `/api/incidents` | Lista; filtros `?status=&priority=&category=&technicianId=` |
+| POST | `/api/incidents` | Crea incidente `{ title, description, category, priority, reportedBy }` |
+| GET | `/api/incidents/:id` | Detalle |
+| PATCH | `/api/incidents/:id/assign` | Asigna técnico `{ technicianId, changedBy? }` |
+| PATCH | `/api/incidents/:id/status` | Cambia estado `{ status, changedBy? }` |
+| GET | `/api/incidents/:id/comments` | Bitácora (comentarios + eventos del sistema) |
+| POST | `/api/incidents/:id/comments` | Agrega comentario `{ author, message }` |
+| GET | `/api/technicians` | Técnicos disponibles |
+
 ## Pruebas
 
 ```bash
