@@ -31,15 +31,15 @@ Verificar: `curl http://localhost:3000/health`
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET |  | Estado del servicio y la base de datos |
-| GET |  | Lista; filtros  |
-| POST |  | Crea incidente  |
-| GET |  | Detalle |
-| PATCH |  | Asigna técnico  |
-| PATCH |  | Cambia estado  |
-| GET |  | Bitácora (comentarios + eventos del sistema) |
-| POST |  | Agrega comentario  |
-| GET |  | Técnicos disponibles |
+| GET | `/health` | Estado del servicio y la base de datos |
+| GET | `/api/incidents` | Lista; filtros `?status=&priority=&category=&technicianId=` |
+| POST | `/api/incidents` | Crea incidente `{ title, description, category, priority, reportedBy }` |
+| GET | `/api/incidents/:id` | Detalle |
+| PATCH | `/api/incidents/:id/assign` | Asigna técnico `{ technicianId, changedBy? }` |
+| PATCH | `/api/incidents/:id/status` | Cambia estado `{ status, changedBy? }` |
+| GET | `/api/incidents/:id/comments` | Bitácora (comentarios + eventos del sistema) |
+| POST | `/api/incidents/:id/comments` | Agrega comentario `{ author, message }` |
+| GET | `/api/technicians` | Técnicos disponibles |
 
 ## Pruebas
 

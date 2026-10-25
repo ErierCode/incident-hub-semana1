@@ -5,11 +5,11 @@ Todas las versiones siguen [Semantic Versioning](https://semver.org/lang/es/) y 
 ## [0.2.0] - 2026-10-24
 
 ### Agregado
--  y asignación/reasignación de técnico con  (AB#22).
-- Máquina de estados NUEVO → ASIGNADO → EN_PROCESO → RESUELTO → CERRADO con  (AB#23).
+- `GET /api/technicians` y asignación/reasignación de técnico con `PATCH /api/incidents/:id/assign` (AB#22).
+- Máquina de estados NUEVO → ASIGNADO → EN_PROCESO → RESUELTO → CERRADO con `PATCH /api/incidents/:id/status` (AB#23).
 - Bitácora automática de asignaciones y cambios de estado (AB#26).
-- Comentarios por incidente:  (AB#25).
-- Filtros combinables en  por , ,  y  (AB#20).
+- Comentarios por incidente: `GET/POST /api/incidents/:id/comments` (AB#25).
+- Filtros combinables en `GET /api/incidents` por `status`, `priority`, `category` y `technicianId` (AB#20).
 
 ## [0.1.0] - 2026-10-24
 
