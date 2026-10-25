@@ -13,8 +13,35 @@ function parseId(req, res) {
 function createIncidentsRouter({ incidents }) {
   const router = express.Router();
 
-  router.get('/', async (_req, res) => {
-    res.json(await incidents.list());
+  router.get('/', async (req, res) => {
+    const { status, priority, category, technicianId } = req.query;
+    const filters = {};
+    if (status !== undefined) {
+      if (!STATUSES.includes(status)) {
+        return res.status(400).json({ error: `status debe ser uno de: ${STATUSES.join(', ')}` });
+      }
+      filters.status = status;
+    }
+    if (priority !== undefined) {
+      if (!PRIORITIES.includes(priority)) {
+        return res.status(400).json({ error: `priority debe ser uno de: ${PRIORITIES.join(', ')}` });
+      }
+      filters.priority = priority;
+    }
+    if (category !== undefined) {
+      if (!CATEGORIES.includes(category)) {
+        return res.status(400).json({ error: `category debe ser uno de: ${CATEGORIES.join(', ')}` });
+      }
+      filters.category = category;
+    }
+    if (technicianId !== undefined) {
+      const parsed = Number(technicianId);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        return res.status(400).json({ error: 'technicianId debe ser un entero positivo' });
+      }
+      filters.technicianId = parsed;
+    }
+    res.json(await incidents.list(filters));
   });
 
   router.get('/:id', async (req, res) => {
@@ -85,6 +112,28 @@ function createIncidentsRouter({ incidents }) {
     const incident = await incidents.changeStatus(id, status, (changedBy || 'técnico').trim());
     console.log(`Incidente ${id} pasó a ${status}`);
     res.json(incident);
+  });
+
+  router.get('/:id/comments', async (req, res) => {
+    const id = parseId(req, res);
+    if (id === null) return;
+    res.json(await incidents.listComments(id));
+  });
+
+  router.post('/:id/comments', async (req, res) => {
+    const id = parseId(req, res);
+    if (id === null) return;
+    const { author, message } = req.body || {};
+    if (!author || typeof author !== 'string' || author.trim() === '') {
+      return res.status(400).json({ error: 'author es obligatorio' });
+    }
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      return res.status(400).json({ error: 'message es obligatorio' });
+    }
+
+    const comment = await incidents.addComment(id, author.trim(), message.trim());
+    console.log(`Comentario agregado al incidente ${id}`);
+    res.status(201).json(comment);
   });
 
   return router;

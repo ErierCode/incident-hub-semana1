@@ -38,13 +38,48 @@ function createIncidentService(db, { technicians }) {
     return getById(rows[0].id);
   }
 
-  async function list() {
+  async function list(filters = {}) {
+    const conditions = [];
+    const params = [];
+    const columns = { status: 'i.status', priority: 'i.priority', category: 'i.category', technicianId: 'i.technician_id' };
+    for (const [key, column] of Object.entries(columns)) {
+      if (filters[key] !== undefined) {
+        params.push(filters[key]);
+        conditions.push(`${column} = $${params.length}`);
+      }
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
     const { rows } = await db.query(
       `SELECT ${INCIDENT_COLUMNS}
        FROM incidents i LEFT JOIN technicians t ON t.id = i.technician_id
+       ${where}
        ORDER BY i.created_at DESC, i.id DESC`,
+      params,
     );
     return rows;
+  }
+
+  async function listComments(id) {
+    await getById(id);
+    const { rows } = await db.query(
+      `SELECT id, author, message, type, created_at
+       FROM incident_comments WHERE incident_id = $1
+       ORDER BY created_at, id`,
+      [id],
+    );
+    return rows;
+  }
+
+  async function addComment(id, author, message) {
+    await getById(id);
+    const { rows } = await db.query(
+      `INSERT INTO incident_comments (incident_id, author, message, type)
+       VALUES ($1, $2, $3, 'COMENTARIO')
+       RETURNING id, author, message, type, created_at`,
+      [id, author, message],
+    );
+    return rows[0];
   }
 
   async function assign(id, technicianId, changedBy) {
@@ -81,7 +116,7 @@ function createIncidentService(db, { technicians }) {
     return getById(id);
   }
 
-  return { create, getById, list, assign, changeStatus };
+  return { create, getById, list, assign, changeStatus, listComments, addComment };
 }
 
 module.exports = { createIncidentService };
